@@ -1,0 +1,90 @@
+id,query
+0,"CREATE TABLE testbase.user_accounts (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash CHAR(64) NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP WITH TIME ZONE,
+    profile_pic BYTEA,
+    active BOOLEAN DEFAULT TRUE
+);"
+1,"CREATE TABLE testbase.transactions (
+    transaction_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    transaction_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    transaction_type VARCHAR (50) CHECK (transaction_type IN ('credit', 'debit')),
+    FOREIGN KEY (user_id) REFERENCES testbase.user_accounts(id) ON DELETE CASCADE
+);"
+2,"CREATE TABLE testbase.products (
+    product_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(15, 2) NOT NULL,
+    in_stock INT NOT NULL CHECK (in_stock >= 0),
+    categories TEXT[]
+);"
+3,"CREATE TABLE testbase.order_items (
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT DEFAULT 1 CHECK (quantity > 0),
+    price_at_purchase DECIMAL(15, 2) NOT NULL,
+    PRIMARY KEY (order_id, product_id),
+    FOREIGN KEY (product_id) REFERENCES testbase.products(product_id) ON UPDATE CASCADE ON DELETE RESTRICT
+);"
+4,"CREATE TABLE testbase.orders (
+    order_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    total_amount DECIMAL(15, 2) NOT NULL,
+    status VARCHAR(50) CHECK (status IN ('placed', 'shipped', 'delivered', 'cancelled')),
+    FOREIGN KEY (user_id) REFERENCES testbase.user_accounts(id) ON DELETE SET NULL
+);"
+5,"CREATE TABLE testbase.product_reviews (
+    review_id SERIAL PRIMARY KEY,
+    product_id INT NOT NULL,
+    user_id INT,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    review TEXT,
+    review_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES testbase.products(product_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES testbase.user_accounts(id) ON DELETE SET NULL
+);"
+6,"CREATE TABLE testbase.wishlists (
+    wishlist_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES testbase.user_accounts(id) ON DELETE CASCADE
+);"
+7,"CREATE TABLE testbase.wishlist_items (
+    wishlist_id INT NOT NULL,
+    product_id INT NOT NULL,
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (wishlist_id, product_id),
+    FOREIGN KEY (wishlist_id) REFERENCES testbase.wishlists(wishlist_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES testbase.products(product_id) ON DELETE CASCADE
+);"
+8,"CREATE TABLE testbase.payment_methods (
+    payment_method_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    card_number CHAR(16) NOT NULL,
+    card_expiry_date DATE NOT NULL,
+    card_cvv CHAR(3) NOT NULL,
+    billing_address TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES testbase.user_accounts(id) ON DELETE CASCADE
+);"
+9,"CREATE TABLE testbase.shipping_addresses (
+    address_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    recipient_name VARCHAR(255) NOT NULL,
+    address_line1 VARCHAR(255) NOT NULL,
+    address_line2 VARCHAR(255),
+    city VARCHAR(100) NOT NULL,
+    state VARCHAR(100) NOT NULL,
+    postal_code VARCHAR(20) NOT NULL,
+    country VARCHAR(100) NOT NULL,
+    phone_number VARCHAR(20),
+    FOREIGN KEY (user_id) REFERENCES testbase.user_accounts(id) ON DELETE CASCADE
+);"
